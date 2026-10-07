@@ -122,6 +122,7 @@ fun MarkleafNavHost(
     sharedText: String? = null,
     sharedCreatedAt: Instant? = null,
     sharedUpdatedAt: Instant? = null,
+    sharedFileName: String? = null,
     openNoteId: String? = null,
     viewFileUri: String? = null,
     /**
@@ -209,7 +210,8 @@ fun MarkleafNavHost(
                     initialContent = sharedText,
                     titleSource = titleSource,
                     createdAt = sharedCreatedAt,
-                    updatedAt = sharedUpdatedAt
+                    updatedAt = sharedUpdatedAt,
+                    fileName = sharedFileName
                 )
                 navController.navigateOnMain(NavRoutes.editorRoute(newNote.id))
             }
@@ -695,14 +697,15 @@ fun MarkleafNavHost(
                 uri = uri,
                 contentMaxWidth = appSettings.lineWidth.maxWidthDp.dp,
                 onBack = { navController.popBackStack() },
-                onSaveAsNote = { body, createdAt, updatedAt ->
+                onSaveAsNote = { body, createdAt, updatedAt, fileName ->
                     coroutineScope.launch {
                         val settings = settingsRepository.settings.first()
                         val newNote = viewerViewModel.createNote(
                             initialContent = body,
                             titleSource = settings.noteTitleSource,
                             createdAt = createdAt,
-                            updatedAt = updatedAt
+                            updatedAt = updatedAt,
+                            fileName = fileName
                         )
                         // Saving from the read-only viewer is a complete note
                         // creation path. Mirror it immediately when folder

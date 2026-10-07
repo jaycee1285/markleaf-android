@@ -7,16 +7,16 @@ import java.time.Instant
 
 /**
  * The two rules that decide what an outside file becomes (#139, #326): the name
- * seeds a title only when the text does not already carry one, and no file — not
+ * is kept separately from the body, and no file — not
  * even one that turns out to be a gigabyte of binary — is read without a ceiling.
  */
 class ExternalFileTest {
 
     @Test
-    fun `file name becomes the title when the text has none`() {
+    fun `import preserves text without injecting a title heading`() {
         val body = ExternalFile.noteBody("Bought milk and eggs.", "shopping list.md")
 
-        assertEquals("# shopping list\n\nBought milk and eggs.", body)
+        assertEquals("Bought milk and eggs.", body)
     }
 
     @Test
@@ -36,19 +36,26 @@ class ExternalFileTest {
     }
 
     @Test
-    fun `a name without an extension still seeds the title`() {
-        assertEquals("# README\n\nHello", ExternalFile.noteBody("Hello", "README"))
+    fun `a name without an extension leaves the body unchanged`() {
+        assertEquals("Hello", ExternalFile.noteBody("Hello", "README"))
     }
 
     @Test
-    fun `only the last extension is dropped`() {
-        assertEquals("# notes.backup\n\nHello", ExternalFile.noteBody("Hello", "notes.backup.md"))
+    fun `a dotted filename leaves the body unchanged`() {
+        assertEquals("Hello", ExternalFile.noteBody("Hello", "notes.backup.md"))
     }
 
     @Test
     fun `an unnamed file keeps the text as it is`() {
         assertEquals("Hello", ExternalFile.noteBody("Hello", null))
         assertEquals("Hello", ExternalFile.noteBody("Hello", "   "))
+    }
+
+    @Test
+    fun `filename is retained independently of a conflicting heading`() {
+        val seed = ExternalFile.noteSeed(ExternalFile.Document("My File.md", "# Different heading\n\nBody"))
+        assertEquals("My File.md", seed.fileName)
+        assertEquals("# Different heading\n\nBody", seed.body)
     }
 
     @Test

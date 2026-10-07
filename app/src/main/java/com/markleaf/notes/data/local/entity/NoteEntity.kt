@@ -41,7 +41,8 @@ data class NoteEntity(
     /** When true this note is the remote side of a sync conflict, kept next to
      *  the local note for manual merge. Replaces the old detection-by-title-
      *  substring, which pinned the label to one hardcoded language. */
-    val isConflictCopy: Boolean = false
+    val isConflictCopy: Boolean = false,
+    val fileName: String? = null
 )
 
 fun NoteEntity.toDomain(): Note {
@@ -61,7 +62,8 @@ fun NoteEntity.toDomain(): Note {
         lastImportedAt = lastImportedAt?.let { Instant.ofEpochMilli(it) },
         remoteSeenAt = remoteSeenAt?.let { Instant.ofEpochMilli(it) },
         locked = locked,
-        isConflictCopy = isConflictCopy
+        isConflictCopy = isConflictCopy,
+        fileName = fileName
     )
 }
 
@@ -81,6 +83,7 @@ fun Note.toEntity(): NoteEntity {
         lastImportedAt = lastImportedAt?.toEpochMilli(),
         remoteSeenAt = remoteSeenAt?.toEpochMilli(),
         locked = locked,
-        isConflictCopy = isConflictCopy
+        isConflictCopy = isConflictCopy,
+        fileName = fileName
     )
 }

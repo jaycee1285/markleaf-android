@@ -44,7 +44,7 @@ class FileViewerScreenTest {
     private fun render(
         state: FileViewerState,
         onBack: () -> Unit = {},
-        onSaveAsNote: (String, Instant?, Instant?) -> Unit = { _, _, _ -> },
+        onSaveAsNote: (String, Instant?, Instant?, String?) -> Unit = { _, _, _, _ -> },
         onLocalLinkClick: ((String) -> Unit)? = null
     ) {
         composeRule.setContent {
@@ -85,7 +85,7 @@ class FileViewerScreenTest {
     @Test
     fun savingHandsBackTheNoteBody() {
         var saved: String? = null
-        render(loaded(), onSaveAsNote = { body, _, _ -> saved = body })
+        render(loaded(), onSaveAsNote = { body, _, _, _ -> saved = body })
 
         composeRule.onNodeWithContentDescription("Save as note").performClick()
 
@@ -104,7 +104,7 @@ class FileViewerScreenTest {
     @Test
     fun anUnreadableFileSaysSoAndOffersNoSave() {
         var saved: String? = null
-        render(FileViewerState.Unreadable, onSaveAsNote = { body, _, _ -> saved = body })
+        render(FileViewerState.Unreadable, onSaveAsNote = { body, _, _, _ -> saved = body })
 
         composeRule.onNodeWithText(
             "This file couldn't be shown. It may be empty, may have been moved or deleted, or may not be a text file."
@@ -122,7 +122,7 @@ class FileViewerScreenTest {
 
         render(
             loaded().copy(createdAt = created, updatedAt = updated),
-            onSaveAsNote = { _, sourceCreated, sourceUpdated ->
+            onSaveAsNote = { _, sourceCreated, sourceUpdated, _ ->
                 savedCreated = sourceCreated
                 savedUpdated = sourceUpdated
             }

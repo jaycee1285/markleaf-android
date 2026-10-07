@@ -76,7 +76,7 @@ sealed interface FileViewerState {
 fun FileViewerScreen(
     uri: Uri,
     onBack: () -> Unit = {},
-    onSaveAsNote: (String, Instant?, Instant?) -> Unit = { _, _, _ -> },
+    onSaveAsNote: (String, Instant?, Instant?, String?) -> Unit = { _, _, _, _ -> },
     /** A relative `.md`/`.txt` link naming a file in the sync folder (#414). Null leaves it unhandled, same as before. */
     onLocalLinkClick: ((String) -> Unit)? = null,
     contentMaxWidth: Dp = Dp.Unspecified
@@ -116,7 +116,7 @@ fun FileViewerScreen(
 internal fun FileViewerContent(
     state: FileViewerState,
     onBack: () -> Unit = {},
-    onSaveAsNote: (String, Instant?, Instant?) -> Unit = { _, _, _ -> },
+    onSaveAsNote: (String, Instant?, Instant?, String?) -> Unit = { _, _, _, _ -> },
     onLocalLinkClick: ((String) -> Unit)? = null,
     /** The reading measure the editor honours on wide screens; unconstrained on a phone. */
     contentMaxWidth: Dp = Dp.Unspecified
@@ -156,7 +156,7 @@ internal fun FileViewerContent(
                 actions = {
                     if (state is FileViewerState.Loaded) {
                         IconButton(onClick = {
-                            onSaveAsNote(state.noteBody, state.createdAt, state.updatedAt)
+                            onSaveAsNote(state.noteBody, state.createdAt, state.updatedAt, state.displayName)
                         }) {
                             Icon(
                                 Icons.AutoMirrored.Outlined.NoteAdd,

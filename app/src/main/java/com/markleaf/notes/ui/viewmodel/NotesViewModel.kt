@@ -80,12 +80,14 @@ class NotesViewModel(
         initialContent: String = "",
         titleSource: NoteTitleSource = NoteTitleSource.FIRST_HEADING,
         createdAt: Instant? = null,
-        updatedAt: Instant? = null
+        updatedAt: Instant? = null,
+        fileName: String? = null
     ): Note {
         val now = Instant.now()
         val newNote = Note(
             id = UUID.randomUUID().toString(),
-            title = if (initialContent.isBlank()) {
+            fileName = fileName,
+            title = fileName?.substringBeforeLast('.') ?: if (initialContent.isBlank()) {
                 ""
             } else {
                 TitleExtractor.extractTitle(initialContent, titleSource)

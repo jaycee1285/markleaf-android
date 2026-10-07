@@ -33,7 +33,7 @@ object NoteRetitler {
     suspend fun retitleAll(repository: NoteRepository, source: NoteTitleSource): Int {
         var changed = 0
         for (note in repository.getAllNotes()) {
-            if (note.contentMarkdown.isBlank() || note.isConflictCopy) continue
+            if (note.contentMarkdown.isBlank() || note.isConflictCopy || note.fileName != null) continue
             val title = TitleExtractor.extractTitle(note.contentMarkdown, source)
             val excerpt = TitleExtractor.generateExcerpt(note.contentMarkdown, source)
             if (title == note.title && excerpt == note.excerpt) continue

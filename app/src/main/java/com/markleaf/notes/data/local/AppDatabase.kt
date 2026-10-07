@@ -29,7 +29,7 @@ import com.markleaf.notes.data.local.entity.TagEntity
         AttachmentEntity::class,
         NoteViewStateEntity::class
     ],
-    version = 18,
+    version = 19,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -319,6 +319,12 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_18_19 = object : Migration(18, 19) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `notes` ADD COLUMN `fileName` TEXT")
+            }
+        }
+
         internal val ALL_MIGRATIONS = arrayOf(
             MIGRATION_4_5,
             MIGRATION_5_6,
@@ -334,7 +340,8 @@ abstract class AppDatabase : RoomDatabase() {
             MIGRATION_14_15,
             MIGRATION_15_16,
             MIGRATION_16_17,
-            MIGRATION_17_18
+            MIGRATION_17_18,
+            MIGRATION_18_19
         )
     }
 }

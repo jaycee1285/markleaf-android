@@ -1,6 +1,8 @@
 package com.markleaf.notes.domain.model
 
 import java.time.Instant
+import com.markleaf.notes.core.text.NoteTitleSource
+import com.markleaf.notes.core.text.TitleExtractor
 
 data class Note(
     val id: String,
@@ -41,5 +43,11 @@ data class Note(
      *  A flag rather than a title suffix: detection used to be a `LIKE` match on
      *  a hardcoded Korean string, which meant every language saw a Korean title
      *  and the title could never be translated without breaking detection. */
-    val isConflictCopy: Boolean = false
-)
+    val isConflictCopy: Boolean = false,
+    /** Original Markdown filename; headings never rename a file-backed note. */
+    val fileName: String? = null
+) {
+    fun titleForContent(content: String, source: NoteTitleSource): String =
+        if (isConflictCopy) title else fileName?.substringBeforeLast('.')
+            ?: TitleExtractor.extractTitle(content, source)
+}

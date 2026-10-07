@@ -285,7 +285,7 @@ fun EditorScreen(
                 )) return
             val updatedNote = if (saveTime != null) {
                 currentNote.copy(
-                    title = TitleExtractor.extractTitle(content, appSettings.noteTitleSource),
+                    title = currentNote.titleForContent(content, appSettings.noteTitleSource),
                     contentMarkdown = content,
                     excerpt = TitleExtractor.generateExcerpt(content, appSettings.noteTitleSource),
                     updatedAt = saveTime
@@ -562,10 +562,13 @@ fun EditorScreen(
         visiblePreviewLines(previewLines, toggledSectionIds)
     }
     val tocHeadings = remember(visibleLines) { extractHeadings(visibleLines) }
+    val persistedNote by remember(noteId) { repo.observeNote(noteId.orEmpty()) }
+        .collectAsState(initial = null)
     // Which line becomes the title is a user setting (#280); it keys every
     // derivation below so flipping it re-titles the open note straight away.
-    val currentTitle = remember(editorState.text, noteId, titleSource) {
-        if (noteId == null) "" else TitleExtractor.extractTitle(editorState.text, titleSource)
+    val currentTitle = remember(editorState.text, noteId, titleSource, persistedNote?.fileName, persistedNote?.title) {
+        if (noteId == null) "" else persistedNote?.titleForContent(editorState.text, titleSource)
+            ?: TitleExtractor.extractTitle(editorState.text, titleSource)
     }
     val backlinksFlow = remember(currentTitle, noteId) {
         linkRepo.observeBacklinks(currentTitle, noteId.orEmpty())
@@ -1259,7 +1262,7 @@ fun EditorScreen(
                                 coroutineScope.launch {
                                     val current = repo.getNote(noteId) ?: return@launch
                                     val live = current.copy(
-                                        title = TitleExtractor.extractTitle(editorState.text, titleSource),
+                                        title = current.titleForContent(editorState.text, titleSource),
                                         contentMarkdown = editorState.text,
                                         excerpt = TitleExtractor.generateExcerpt(editorState.text, titleSource)
                                     )
@@ -1274,7 +1277,7 @@ fun EditorScreen(
                                 coroutineScope.launch {
                                     val current = repo.getNote(noteId) ?: return@launch
                                     val live = current.copy(
-                                        title = TitleExtractor.extractTitle(editorState.text, titleSource),
+                                        title = current.titleForContent(editorState.text, titleSource),
                                         contentMarkdown = editorState.text,
                                         excerpt = TitleExtractor.generateExcerpt(editorState.text, titleSource)
                                     )
@@ -1290,7 +1293,7 @@ fun EditorScreen(
                                 coroutineScope.launch {
                                     val current = repo.getNote(noteId) ?: return@launch
                                     val live = current.copy(
-                                        title = TitleExtractor.extractTitle(editorState.text, titleSource),
+                                        title = current.titleForContent(editorState.text, titleSource),
                                         contentMarkdown = editorState.text,
                                         excerpt = TitleExtractor.generateExcerpt(editorState.text, titleSource)
                                     )

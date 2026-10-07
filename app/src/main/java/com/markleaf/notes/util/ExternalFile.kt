@@ -39,7 +39,8 @@ object ExternalFile {
     data class NoteSeed(
         val body: String,
         val createdAt: Instant?,
-        val updatedAt: Instant?
+        val updatedAt: Instant?,
+        val fileName: String? = null
     )
 
     /**
@@ -80,23 +81,17 @@ object ExternalFile {
         return NoteSeed(
             body = noteBody(document),
             createdAt = parsed.createdAt ?: fallback,
-            updatedAt = parsed.updatedAt ?: fallback ?: parsed.createdAt
+            updatedAt = parsed.updatedAt ?: fallback ?: parsed.createdAt,
+            fileName = document.displayName?.takeIf { it.isNotBlank() }
         )
     }
 
     /**
-     * Seed a title from the file name when the text does not already carry one.
-     * A leading `#` (heading) or `---` (frontmatter) means the file titles
-     * itself, and prepending anything there would fight whatever wrote it.
+     * Preserve the source text. The filename is stored separately as the title;
+     * importing a document must not inject a heading into its Markdown.
      */
     internal fun noteBody(text: String, displayName: String?): String {
-        val name = displayName
-            ?.substringBeforeLast('.')
-            ?.trim()
-            ?.takeIf { it.isNotBlank() }
-        val trimmed = text.trimStart()
-        val alreadyTitled = trimmed.startsWith("#") || trimmed.startsWith("---")
-        return if (name != null && !alreadyTitled) "# $name\n\n$text" else text
+        return text
     }
 
     /** The file's own name, e.g. `meeting-notes.md`, or null when it has none. */

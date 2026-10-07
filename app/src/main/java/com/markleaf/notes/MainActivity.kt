@@ -282,6 +282,7 @@ class MainActivity : FragmentActivity() {
                         sharedText = sharedContent?.body,
                         sharedCreatedAt = sharedContent?.createdAt,
                         sharedUpdatedAt = sharedContent?.updatedAt,
+                        sharedFileName = sharedContent?.fileName,
                         openNoteId = openNoteId,
                         viewFileUri = viewFileUri,
                         dispatchLaunchRequest = !launchAlreadyDispatched,
@@ -415,7 +416,8 @@ class MainActivity : FragmentActivity() {
     private data class ImportedContent(
         val body: String,
         val createdAt: Instant?,
-        val updatedAt: Instant?
+        val updatedAt: Instant?,
+        val fileName: String? = null
     )
 
     private fun extractInitialContent(intent: Intent?): ImportedContent? {
@@ -455,7 +457,7 @@ class MainActivity : FragmentActivity() {
      */
     private fun readNoteFromUri(uri: Uri): ImportedContent? =
         ExternalFile.read(this, uri)?.let(ExternalFile::noteSeed)?.let {
-            ImportedContent(it.body, it.createdAt, it.updatedAt)
+            ImportedContent(it.body, it.createdAt, it.updatedAt, it.fileName)
         }
 }
 

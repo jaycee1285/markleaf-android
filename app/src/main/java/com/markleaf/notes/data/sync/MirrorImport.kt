@@ -126,12 +126,21 @@ internal object MirrorImport {
                     // it would resurrect the deleted note (#148), so skip it.
                     NoteFolderMirror.Reconcile.SkipTrashed -> skipped++
                     // File isn't strictly newer than the DB note — nothing to do.
-                    NoteFolderMirror.Reconcile.Skip -> skipped++
+                    NoteFolderMirror.Reconcile.Skip -> {
+                        // Adopt names even when the body and timestamps are unchanged.
+                        val note = existingNote!!
+                        val name = file.name!!
+                        if (note.fileName != name) {
+                            applyUpdate(note.copy(fileName = name, title = if (note.isConflictCopy) note.title else name.substringBeforeLast('.')))
+                            updated++
+                        } else skipped++
+                    }
                     NoteFolderMirror.Reconcile.Create -> {
                         val now = Instant.now()
                         val newNote = Note(
                             id = parsed.markleafId ?: UUID.randomUUID().toString(),
-                            title = TitleExtractor.extractTitle(parsed.body, titleSource),
+                            fileName = file.name,
+                            title = file.name!!.substringBeforeLast('.'),
                             contentMarkdown = parsed.body,
                             excerpt = TitleExtractor.generateExcerpt(parsed.body, titleSource),
                             createdAt = parsed.createdAt ?: now,
@@ -159,10 +168,11 @@ internal object MirrorImport {
                         // Both sides moved since the last sync. Keep the local
                         // note's content untouched and bring the remote in as a
                         // separate note so the user can compare and merge by hand.
-                        val baseTitle = TitleExtractor.extractTitle(parsed.body, titleSource)
+                        val baseTitle = file.name!!.substringBeforeLast('.')
                         val suffix = conflictSuffix(context, Instant.now())
                         val duplicate = Note(
                             id = UUID.randomUUID().toString(),
+                            fileName = file.name,
                             title = "$baseTitle $suffix",
                             contentMarkdown = parsed.body,
                             excerpt = TitleExtractor.generateExcerpt(parsed.body, titleSource),
@@ -181,13 +191,18 @@ internal object MirrorImport {
                         // Nothing the *user* owns is touched: `updatedAt` stays
                         // put, so a note they never edited keeps its place in
                         // the list (#222). Only `remoteSeenAt` moves.
-                        applyUpdate(existingNote!!.copy(remoteSeenAt = fileTs))
+                        applyUpdate(existingNote!!.copy(
+                            remoteSeenAt = fileTs,
+                            fileName = file.name,
+                            title = file.name!!.substringBeforeLast('.')
+                        ))
                         conflicts++
                     }
                     NoteFolderMirror.Reconcile.Overwrite -> {
                         val note = existingNote!!
                         val merged = note.copy(
-                            title = TitleExtractor.extractTitle(parsed.body, titleSource),
+                            fileName = file.name,
+                            title = file.name!!.substringBeforeLast('.'),
                             contentMarkdown = parsed.body,
                             excerpt = TitleExtractor.generateExcerpt(parsed.body, titleSource),
                             updatedAt = fileTs,
@@ -301,7 +316,15 @@ internal object MirrorImport {
             try {
                 when (MirrorReconcile.sidecarReconcileAction(existingNote, matchesLastWrite)) {
                     NoteFolderMirror.Reconcile.SkipTrashed -> skipped++
-                    NoteFolderMirror.Reconcile.Skip -> skipped++
+                    NoteFolderMirror.Reconcile.Skip -> {
+                        // Adopt names even when the body and timestamps are unchanged.
+                        val note = existingNote!!
+                        val name = file.name!!
+                        if (note.fileName != name) {
+                            applyUpdate(note.copy(fileName = name, title = if (note.isConflictCopy) note.title else name.substringBeforeLast('.')))
+                            updated++
+                        } else skipped++
+                    }
                     NoteFolderMirror.Reconcile.Create -> {
                         val now = Instant.now()
                         // An entry with no note behind it means the note was
@@ -322,7 +345,8 @@ internal object MirrorImport {
                                 // identities across devices.
                                 ?: parsed.markleafId
                                 ?: UUID.randomUUID().toString(),
-                            title = TitleExtractor.extractTitle(text, titleSource),
+                            fileName = file.name,
+                            title = file.name!!.substringBeforeLast('.'),
                             contentMarkdown = text,
                             excerpt = TitleExtractor.generateExcerpt(text, titleSource),
                             createdAt = createdAt,
@@ -348,9 +372,10 @@ internal object MirrorImport {
                     }
                     NoteFolderMirror.Reconcile.Conflict -> {
                         val note = existingNote!!
-                        val baseTitle = TitleExtractor.extractTitle(text, titleSource)
+                        val baseTitle = file.name!!.substringBeforeLast('.')
                         val duplicate = Note(
                             id = UUID.randomUUID().toString(),
+                            fileName = file.name,
                             title = "$baseTitle ${conflictSuffix(context, Instant.now())}",
                             contentMarkdown = text,
                             excerpt = TitleExtractor.generateExcerpt(text, titleSource),
@@ -366,6 +391,7 @@ internal object MirrorImport {
                         // stops the next pass copying the same remote version
                         // again, once a minute, for ever (#217). Nothing the
                         // user owns moves — the local note is untouched.
+                        applyUpdate(note.copy(fileName = file.name, title = file.name!!.substringBeforeLast('.')))
                         ownEntries[note.id] = SidecarEntry(
                             noteId = note.id,
                             fileName = fileName,
@@ -381,7 +407,8 @@ internal object MirrorImport {
                         val now = Instant.now()
                         applyUpdate(
                             note.copy(
-                                title = TitleExtractor.extractTitle(text, titleSource),
+                                fileName = file.name,
+                                title = file.name!!.substringBeforeLast('.'),
                                 contentMarkdown = text,
                                 excerpt = TitleExtractor.generateExcerpt(text, titleSource),
                                 updatedAt = now,
